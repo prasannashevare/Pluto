@@ -90,8 +90,12 @@
 #endif
 static serialPort_t *mspSerialPort;
 
-extern uint16_t cycleTime; // FIXME dependency on mw.c
+
+uint16_t cycleTime; // FIXME dependency on mw.c
 extern uint16_t rssi; // FIXME dependency on mw.c
+//extern uint16_t initialThrottleHold_test; //DRONA
+//extern uint16_t debug_d0;//drona
+uint16_t debug_e11;
 
 void useRcControlsConfig(modeActivationCondition_t *modeActivationConditions, escAndServoConfig_t *escAndServoConfigToUse, pidProfile_t *pidProfileToUse);
 
@@ -311,7 +315,7 @@ static const char * const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 #define MSP_GPSSVINFO            164    //out message         get Signal Strength (only U-Blox)
 #define MSP_SERVO_MIX_RULES      241    //out message         Returns servo mixer configuration
 #define MSP_SET_SERVO_MIX_RULE   242    //in message          Sets servo mixer configuration
-#define MSP_SET_1WIRE            243    //in message          Sets 1Wire paththrough 
+#define MSP_SET_1WIRE            243    //in message          Sets 1Wire paththrough
 
 #define INBUF_SIZE 64
 
@@ -363,6 +367,10 @@ extern int16_t motor_disarmed[MAX_SUPPORTED_MOTORS];
 
 // cause reboot after MSP processing complete
 static bool isRebootScheduled = false;
+
+int16_t debug_e2 ; //drona
+extern rollAndPitchInclination_t inclination ;
+extern int16_t accSmooth[3];//drona pras2
 
 static const char pidnames[] =
     "ROLL;"
@@ -795,7 +803,13 @@ static bool processOutCommand(uint8_t cmdMSP)
 
     case MSP_STATUS:
         headSerialReply(11);
-        serialize16(cycleTime);
+        //serialize16(cycleTime);
+        //initialThrottleHold_test = initialThrottleHold_test + 1;
+              //DRONA
+             // debug_e11 = currentProfile->pidProfile.pidController ; //drona
+
+
+        serialize16(1000*barometerConfig_tmp->baro_cf_alt);
 #ifdef USE_I2C
         serialize16(i2cGetErrorCounter());
 #else
@@ -924,7 +938,7 @@ static bool processOutCommand(uint8_t cmdMSP)
         break;
     case MSP_ARMING_CONFIG:
         headSerialReply(2);
-        serialize8(masterConfig.auto_disarm_delay); 
+        serialize8(masterConfig.auto_disarm_delay);
         serialize8(masterConfig.disarm_kill_switch);
         break;
     case MSP_LOOP_TIME:
@@ -946,6 +960,7 @@ static bool processOutCommand(uint8_t cmdMSP)
         break;
     case MSP_PID:
         headSerialReply(3 * PID_ITEM_COUNT);
+        //debug_e2= int(IS_PID_CONTROLLER_FP_BASED(currentProfile->pidProfile.pidController));  //drona
         if (IS_PID_CONTROLLER_FP_BASED(currentProfile->pidProfile.pidController)) { // convert float stuff into uint8_t to keep backwards compatability with all 8-bit shit with new pid
             for (i = 0; i < 3; i++) {
                 serialize8(constrain(lrintf(currentProfile->pidProfile.P_f[i] * 10.0f), 0, 255));
@@ -1481,7 +1496,7 @@ static bool processInCommand(void)
         }
 #endif
         break;
-        
+
     case MSP_SET_SERVO_MIX_RULE:
 #ifdef USE_SERVOS
         i = read8();
@@ -1499,7 +1514,7 @@ static bool processInCommand(void)
         }
 #endif
         break;
-        
+
     case MSP_RESET_CONF:
         if (!ARMING_FLAG(ARMED)) {
             resetEEPROM();

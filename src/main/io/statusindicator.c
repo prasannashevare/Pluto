@@ -61,15 +61,15 @@ void warningLedRefresh(void)
 {
     switch (warningLedState) {
         case WARNING_LED_OFF:
-            LED0_OFF;
+          //  LED0_OFF; //drona
             break;
         case WARNING_LED_ON:
-            LED0_ON;
+           // LED0_ON; //drona
             break;
         case WARNING_LED_FLASH:
-            LED0_TOGGLE;
+           // LED0_TOGGLE; //drona
             break;
-    }
+    } //drona
 
     uint32_t now = micros();
     warningLedTimer = now + 500000;
@@ -83,7 +83,7 @@ void warningLedUpdate(void)
         return;
     }
 
-    warningLedRefresh();
+    //warningLedRefresh(); //drona
 }
 
 

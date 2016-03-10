@@ -216,6 +216,9 @@ int16_t imuCalculateHeading(t_fp_vector *vec)
     float Yh = vec->A[Y] * cosineRoll - vec->A[Z] * sineRoll;
     //TODO: Replace this comment with an explanation of why Yh and Xh can never simultanoeusly be zero,
     // or handle the case in which they are and (atan2f(0, 0) is undefined.
+
+
+
     float hd = (atan2f(Yh, Xh) * 1800.0f / M_PIf + magneticDeclination) / 10.0f;
     head = lrintf(hd);
 

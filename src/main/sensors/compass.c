@@ -92,7 +92,7 @@ void updateCompass(flightDynamicsTrims_t *magZero)
 
     if (tCal != 0) {
         if ((nextUpdateAt - tCal) < 30000000) {    // 30s: you have 30s to turn the multi in all directions
-            LED0_TOGGLE;
+            //LED0_TOGGLE; //drona
             for (axis = 0; axis < 3; axis++) {
                 if (magADC[axis] < magZeroTempMin.raw[axis])
                     magZeroTempMin.raw[axis] = magADC[axis];

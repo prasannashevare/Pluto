@@ -40,8 +40,11 @@
 #define GYRO
 #define USE_GYRO_MPU6050
 
-//#define MAG
-//#define USE_MAG_HMC5883
+#define MAG
+#define USE_MAG_HMC5883
+
+#define BARO
+#define USE_BARO_MS5611
 
 #define BRUSHED_MOTORS
 
@@ -59,7 +62,7 @@
 
 #define SERIAL_RX
 //#define USE_SERVOS
-#define USE_CLI
+//#define USE_CLI
 
 #define SPEKTRUM_BIND
 // USART2, PA3
@@ -77,3 +80,9 @@
 //#undef USE_CLI
 //#define GTUNE
 //#define BLACKBOX
+#define USE_ADC
+#define BOARD_HAS_VOLTAGE_DIVIDER
+
+#define VBAT_ADC_GPIO               GPIOA
+#define VBAT_ADC_GPIO_PIN           GPIO_Pin_3
+#define VBAT_ADC_CHANNEL            ADC_Channel_3

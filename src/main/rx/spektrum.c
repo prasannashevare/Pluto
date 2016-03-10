@@ -208,13 +208,13 @@ void spektrumBind(rxConfig_t *rxConfig)
 
     for (i = 0; i < rxConfig->spektrum_sat_bind; i++) {
 
-        LED0_OFF;
+       // LED0_OFF; //drona
         LED2_OFF;
         // RX line, drive low for 120us
         digitalLo(BIND_PORT, BIND_PIN);
         delayMicroseconds(120);
 
-        LED0_ON;
+       // LED0_ON; //drona
         LED2_ON;
         // RX line, drive high for 120us
         digitalHi(BIND_PORT, BIND_PIN);

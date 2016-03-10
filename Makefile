@@ -420,9 +420,8 @@ CJMCU_SRC = \
 		   drivers/timer.c \
 		   drivers/timer_stm32f10x.c \
 		   hardware_revision.c \
-		   flight/gtune.c \
-		   blackbox/blackbox.c \
-		   blackbox/blackbox_io.c \
+		   drivers/barometer_ms5611.c \
+		   sensors/barometer.c \
 		   $(COMMON_SRC)
 
 CC3D_SRC = \

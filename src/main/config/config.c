@@ -145,18 +145,18 @@ static void resetPidProfile(pidProfile_t *pidProfile)
 {
     pidProfile->pidController = 0;
 
-    pidProfile->P8[ROLL] = 40;
-    pidProfile->I8[ROLL] = 30;
-    pidProfile->D8[ROLL] = 23;
-    pidProfile->P8[PITCH] = 40;
-    pidProfile->I8[PITCH] = 30;
-    pidProfile->D8[PITCH] = 23;
-    pidProfile->P8[YAW] = 85;
-    pidProfile->I8[YAW] = 45;
-    pidProfile->D8[YAW] = 0;
+    pidProfile->P8[ROLL] = 38; //40;
+    pidProfile->I8[ROLL] = 35; //30;
+    pidProfile->D8[ROLL] = 30; //23;
+    pidProfile->P8[PITCH] = 38; //40;
+    pidProfile->I8[PITCH] = 35; //30;
+    pidProfile->D8[PITCH] = 30; //23;
+    pidProfile->P8[YAW] = 80; //85;
+    pidProfile->I8[YAW] = 40; //45;
+    pidProfile->D8[YAW] = 5; //0;
     pidProfile->P8[PIDALT] = 50;
     pidProfile->I8[PIDALT] = 0;
-    pidProfile->D8[PIDALT] = 0;
+    pidProfile->D8[PIDALT] = 30; //0;
     pidProfile->P8[PIDPOS] = 15; // POSHOLD_P * 100;
     pidProfile->I8[PIDPOS] = 0; // POSHOLD_I * 100;
     pidProfile->D8[PIDPOS] = 0;
@@ -225,7 +225,7 @@ void resetBarometerConfig(barometerConfig_t *barometerConfig)
     barometerConfig->baro_sample_count = 21;
     barometerConfig->baro_noise_lpf = 0.6f;
     barometerConfig->baro_cf_vel = 0.985f;
-    barometerConfig->baro_cf_alt = 0.965f;
+    barometerConfig->baro_cf_alt = 0.92f;
 }
 
 void resetSensorAlignment(sensorAlignmentConfig_t *sensorAlignmentConfig)
@@ -237,7 +237,7 @@ void resetSensorAlignment(sensorAlignmentConfig_t *sensorAlignmentConfig)
 
 void resetEscAndServoConfig(escAndServoConfig_t *escAndServoConfig)
 {
-    escAndServoConfig->minthrottle = 1150;
+    escAndServoConfig->minthrottle = 1100;
     escAndServoConfig->maxthrottle = 1850;
     escAndServoConfig->mincommand = 1000;
     escAndServoConfig->servoCenterPulse = 1500;
@@ -327,7 +327,7 @@ void resetRcControlsConfig(rcControlsConfig_t *rcControlsConfig) {
     rcControlsConfig->deadband = 0;
     rcControlsConfig->yaw_deadband = 0;
     rcControlsConfig->alt_hold_deadband = 40;
-    rcControlsConfig->alt_hold_fast_change = 1;
+    rcControlsConfig->alt_hold_fast_change = 0; // Drona test
 }
 
 void resetMixerConfig(mixerConfig_t *mixerConfig) {
@@ -385,7 +385,9 @@ static void resetConf(void)
     masterConfig.mixerMode = MIXER_QUADX;
     featureClearAll();
 #if defined(CJMCU) || defined(SPARKY) || defined(COLIBRI_RACE) || defined(MOTOLAB)
-    featureSet(FEATURE_RX_PPM);
+    //featureSet(FEATURE_RX_PPM);
+	featureSet(FEATURE_RX_MSP);
+
 #endif
 
 #ifdef BOARD_HAS_VOLTAGE_DIVIDER
@@ -410,7 +412,7 @@ static void resetConf(void)
     masterConfig.boardAlignment.pitchDegrees = 0;
     masterConfig.boardAlignment.yawDegrees = 0;
     masterConfig.acc_hardware = ACC_DEFAULT;     // default/autodetect
-    masterConfig.max_angle_inclination = 500;    // 50 degrees
+    masterConfig.max_angle_inclination = 120; //drona   // 50 degrees  Drona
     masterConfig.yaw_control_direction = 1;
     masterConfig.gyroConfig.gyroMovementCalibrationThreshold = 32;
 
@@ -485,6 +487,27 @@ static void resetConf(void)
     //     cfg.activate[i] = 0;
 
     resetRollAndPitchTrims(&currentProfile->accelerometerTrims);
+
+    //Drona aux config
+    modeActivationCondition_t *mac_1 = &currentProfile->modeActivationConditions[0];
+    mac_1->modeId=0;//BOXARM from rccontrols.h
+    mac_1->auxChannelIndex=3;//Aux channel 4
+    mac_1->range.startStep=16;//Means 1300
+    mac_1->range.endStep=32;//Means 1700
+
+    modeActivationCondition_t *mac_2 = &currentProfile->modeActivationConditions[1];
+    mac_2->modeId=1;//BOXANGLE from rccontrols.h
+    mac_2->auxChannelIndex=0;//Aux channel 1
+    mac_2->range.startStep=0;//900
+    mac_2->range.endStep=48;//2100
+
+    modeActivationCondition_t *mac_3 = &currentProfile->modeActivationConditions[2];
+    mac_3->modeId=3;//BOXBARO from rccontrols.h
+    mac_3->auxChannelIndex=2;//Aux channel 4
+    mac_3->range.startStep=16;//1300
+    mac_3->range.endStep=32;//1700
+
+
 
     currentProfile->mag_declination = 0;
     currentProfile->acc_lpf_factor = 4;

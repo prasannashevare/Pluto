@@ -19,7 +19,7 @@
 
 #include "rx/rx.h"
 
-#define VBAT_SCALE_DEFAULT 110
+#define VBAT_SCALE_DEFAULT 13 // Drona
 #define VBAT_RESDIVVAL_DEFAULT 10
 #define VBAT_RESDIVMULTIPLIER_DEFAULT 1
 #define VBAT_SCALE_MIN 0

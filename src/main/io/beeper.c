@@ -218,7 +218,7 @@ void beeperSilence(void)
 {
     BEEP_OFF;
     warningLedDisable();
-    warningLedRefresh();
+   // warningLedRefresh(); //drona
 
 
     beeperIsOn = 0;
@@ -304,7 +304,7 @@ void beeperUpdate(void)
         if (currentBeeperEntry->sequence[beeperPos] != 0) {
             BEEP_ON;
             warningLedEnable();
-            warningLedRefresh();
+           // warningLedRefresh();//drona
             // if this was arming beep then mark time (for blackbox)
             if (
                 beeperPos == 0
@@ -318,7 +318,7 @@ void beeperUpdate(void)
         if (currentBeeperEntry->sequence[beeperPos] != 0) {
             BEEP_OFF;
             warningLedDisable();
-            warningLedRefresh();
+           // warningLedRefresh(); //drona
         }
     }
 

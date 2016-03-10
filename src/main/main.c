@@ -132,6 +132,8 @@ void SetSysClock(void);
 void SetSysClock(bool overclock);
 #endif
 
+
+
 typedef enum {
     SYSTEM_STATE_INITIALISING   = 0,
     SYSTEM_STATE_CONFIG_LOADED  = (1 << 0),
@@ -168,6 +170,7 @@ void init(void)
     // Configure the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers
     // Configure the Flash Latency cycles and enable prefetch buffer
     SetSysClock(masterConfig.emf_avoidance);
+
 #endif
 
 #ifdef USE_HARDWARE_REVISION_DETECTION
@@ -378,18 +381,19 @@ void init(void)
 
     systemState |= SYSTEM_STATE_SENSORS_READY;
 
-    LED1_ON;
-    LED0_OFF;
-    for (i = 0; i < 10; i++) {
-        LED1_TOGGLE;
-        LED0_TOGGLE;
+    LED1_ON;  //drona led
+    LED0_OFF; //drona led
+    for (i = 0; i < 15; i++) {
+        LED1_TOGGLE;//drona led
+        LED0_TOGGLE;//drona
+        LED2_TOGGLE;//drona
         delay(25);
         BEEP_ON;
         delay(25);
         BEEP_OFF;
     }
-    LED0_OFF;
-    LED1_OFF;
+    LED0_OFF;   //drona
+    LED1_OFF;     //drona led
 
 #ifdef MAG
     if (sensors(SENSOR_MAG))
@@ -500,7 +504,7 @@ void init(void)
 #endif
 
 #ifdef CJMCU
-    LED2_ON;
+    //LED2_ON;//drona led
 #endif
 
     // Latch active features AGAIN since some may be modified by init().

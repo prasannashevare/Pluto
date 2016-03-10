@@ -1026,7 +1026,7 @@ void gpsEnablePassthrough(serialPort_t *gpsPassthroughPort)
     if(!(gpsPort->mode & MODE_TX))
         serialSetMode(gpsPort, gpsPort->mode | MODE_TX);
 
-    LED0_OFF;
+   // LED0_OFF; //drona
     LED1_OFF;
 
 #ifdef DISPLAY
@@ -1037,11 +1037,11 @@ void gpsEnablePassthrough(serialPort_t *gpsPassthroughPort)
     char c;
     while(1) {
         if (serialRxBytesWaiting(gpsPort)) {
-            LED0_ON;
+       //     LED0_ON;//drona
             c = serialRead(gpsPort);
             gpsNewData(c);
             serialWrite(gpsPassthroughPort, c);
-            LED0_OFF;
+          //  LED0_OFF; //drona
         }
         if (serialRxBytesWaiting(gpsPassthroughPort)) {
             LED1_ON;

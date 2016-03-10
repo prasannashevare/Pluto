@@ -44,21 +44,21 @@
 #include "flight/mixer.h"
 #include "flight/pid.h"
 #include "flight/imu.h"
-
 #include "config/runtime_config.h"
 
 int32_t setVelocity = 0;
-uint8_t velocityControl = 0;
+uint8_t velocityControl = 1;
 int32_t errorVelocityI = 0;
 int32_t altHoldThrottleAdjustment = 0;
 int32_t AltHold;
 int32_t vario = 0;                      // variometer in cm/s
 
-
+//extern uint16_t debug_d0;
 static barometerConfig_t *barometerConfig;
 static pidProfile_t *pidProfile;
 static rcControlsConfig_t *rcControlsConfig;
 static escAndServoConfig_t *escAndServoConfig;
+barometerConfig_t *barometerConfig_tmp;
 
 void configureAltitudeHold(
         pidProfile_t *initialPidProfile,
@@ -70,49 +70,88 @@ void configureAltitudeHold(
     pidProfile = initialPidProfile;
     barometerConfig = intialBarometerConfig;
     rcControlsConfig = initialRcControlsConfig;
+    barometerConfig_tmp=barometerConfig;
     escAndServoConfig = initialEscAndServoConfig;
 }
 
+
+
 #if defined(BARO) || defined(SONAR)
 
-static int16_t initialThrottleHold;
+static int16_t initialThrottleHold; //DRONA
 static int32_t EstAlt;                // in cm
+int16_t initialThrottleHold_test; //DRONA
+int16_t debug_e1; //DRONA
 
 // 40hz update rate (20hz LPF on acc)
 #define BARO_UPDATE_FREQUENCY_40HZ (1000 * 25)
 
 #define DEGREES_80_IN_DECIDEGREES 800
-
+/** Drone should maintian its altitude which it attins at the throttle of '1500'*/
 static void applyMultirotorAltHold(void)
 {
     static uint8_t isAltHoldChanged = 0;
+    static int16_t throttle_history=0; //drona
+    static int16_t sensitivity_inv = 6;
     // multirotor alt hold
-    if (rcControlsConfig->alt_hold_fast_change) {
+   if (rcControlsConfig->alt_hold_fast_change) {
         // rapid alt changes
         if (ABS(rcData[THROTTLE] - initialThrottleHold) > rcControlsConfig->alt_hold_deadband) {
-            errorVelocityI = 0;
+            //errorVelocityI = 0; //drona pras
             isAltHoldChanged = 1;
-            rcCommand[THROTTLE] += (rcData[THROTTLE] > initialThrottleHold) ? -rcControlsConfig->alt_hold_deadband : rcControlsConfig->alt_hold_deadband;
+            //rcCommand[THROTTLE] += (rcData[THROTTLE] > initialThrottleHold) ? -rcControlsConfig->alt_hold_deadband : rcControlsConfig->alt_hold_deadband; //drona
+            rcCommand[THROTTLE] = throttle_history +  constrain((rcData[THROTTLE] - initialThrottleHold)/sensitivity_inv,-80,80); //drona
+            if(rcData[THROTTLE]<1100)//Drona pras2
+            {
+                rcCommand[THROTTLE]= 1150;
+            }
+           //led2_op(true);//drona led
+           //led1_op(false);//drona led
+           //debug1 = rcCommand[THROTTLE]; //DRONA
         } else {
             if (isAltHoldChanged) {
                 AltHold = EstAlt;
                 isAltHoldChanged = 0;
+                if (ARMING_FLAG(ARMED)){
+                //altHoldThrottleAdjustment = throttle_history;//drona pras
+                }
             }
+            //led2_op(false);//drona led
+            //led1_op(true);//drona led
             rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, escAndServoConfig->minthrottle, escAndServoConfig->maxthrottle);
+            throttle_history = rcCommand[THROTTLE] ; //drona
+
         }
     } else {
         // slow alt changes, mostly used for aerial photography
         if (ABS(rcData[THROTTLE] - initialThrottleHold) > rcControlsConfig->alt_hold_deadband) {
             // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-            setVelocity = (rcData[THROTTLE] - initialThrottleHold) / 2;
+            setVelocity = (rcData[THROTTLE] - initialThrottleHold) / 6;
+            setVelocity = constrain(setVelocity,-120,120);
+           /* if (isAltHoldChanged)
+               velocityControl = 0;
+            else
+               velocityControl = 1;*/
             velocityControl = 1;
-            isAltHoldChanged = 1;
-        } else if (isAltHoldChanged) {
-            AltHold = EstAlt;
-            velocityControl = 0;
-            isAltHoldChanged = 0;
-        }
+            isAltHoldChanged=1;
+        } else if(isAltHoldChanged){
+            setVelocity = 0;
+            velocityControl = 1;
+            AltHold=EstAlt;
+            isAltHoldChanged=0;
+         }
+
+
+         /*if((setVelocity>50))
+            {led2_op(true);}
+         else
+            {led2_op(false);}*/
+
         rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, escAndServoConfig->minthrottle, escAndServoConfig->maxthrottle);
+        if(rcData[THROTTLE]<1150)
+            {
+            rcCommand[THROTTLE]=rcData[THROTTLE];
+            }
     }
 }
 
@@ -140,15 +179,25 @@ void updateAltHoldState(void)
     if (!IS_RC_MODE_ACTIVE(BOXBARO)) {
         DISABLE_FLIGHT_MODE(BARO_MODE);
         return;
-    }
+         }
 
     if (!FLIGHT_MODE(BARO_MODE)) {
+        //led0_op(false);
         ENABLE_FLIGHT_MODE(BARO_MODE);
-        AltHold = EstAlt;
-        initialThrottleHold = rcData[THROTTLE];
-        errorVelocityI = 0;
-        altHoldThrottleAdjustment = 0;
+           AltHold = EstAlt;//+100;//drona pras                      //DRONA
+        //initialThrottleHold = rcData[THROTTLE];//Drona pras     //
+        initialThrottleHold = 1500;//Drona pras     //
+        errorVelocityI = 0;                               //DRONA
+        altHoldThrottleAdjustment = 0;                    //DRONA
     }
+    else
+    {
+           //led0_op(true);//drona pras
+
+    }
+    initialThrottleHold_test=initialThrottleHold;           //DRONA
+    //debug_d0 = pidProfile->D8[PIDALT];
+    debug_e1 = rcCommand[THROTTLE];                      //DRONA
 }
 
 void updateSonarAltHoldState(void)
@@ -194,14 +243,35 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     }
 
     // Altitude P-Controller
+    if(!ARMING_FLAG(ARMED))//Drona alt
+        {AltHold= EstAlt + 100;
+        //initialThrottleHold=1500;//Drona pras
+        }//default alt = 100cm;
 
     if (!velocityControl) {
         error = constrain(AltHold - EstAlt, -500, 500);
         error = applyDeadband(error, 10); // remove small P parameter to reduce noise near zero position
         setVel = constrain((pidProfile->P8[PIDALT] * error / 128), -300, +300); // limit velocity to +/- 3 m/s
+        //led2_op(false);
     } else {
+        //led2_op(true);
         setVel = setVelocity;
     }
+
+    /*if((setVelocity>50))
+        {led1_op(true);}
+    else
+        {led1_op(false);}*/
+
+    /*if(setVel>50)
+         {
+         led0_op(true);
+         }
+    else
+         {
+         led0_op(false);
+         }
+    */
     // Velocity PID-Controller
 
     // P
@@ -209,8 +279,17 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     result = constrain((pidProfile->P8[PIDVEL] * error / 32), -300, +300);
 
     // I
-    errorVelocityI += (pidProfile->I8[PIDVEL] * error);
-    errorVelocityI = constrain(errorVelocityI, -(8192 * 200), (8192 * 200));
+    if(ARMING_FLAG(ARMED))/*//Drona alt*/
+    {
+        errorVelocityI += (pidProfile->I8[PIDVEL] * error);
+    }
+    else
+    {
+        errorVelocityI = 0;
+    }/*//Drona alt*/
+
+
+    errorVelocityI = constrain(errorVelocityI, -(8192 * 300), (8192 * 300));
     result += errorVelocityI / 8192;     // I in range +/-200
 
     // D
@@ -218,7 +297,8 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 
     return result;
 }
-
+int16_t accalttemp;
+float Temp;
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
     static uint32_t previousTime;
@@ -287,7 +367,8 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     vel_acc = accZ_tmp * accVelScale * (float)accTimeSum;
 
     // Integrator - Altitude in cm
-    accAlt += (vel_acc * 0.5f) * dt + vel * dt;                                                                 // integrate velocity to get distance (x= a/2 * t^2)
+    accAlt += (vel_acc * 0.5f) * dt + vel * dt; 
+    accalttemp=lrintf(100*accAlt); //Checking how acc measures height                                                                // integrate velocity to get distance (x= a/2 * t^2)
     accAlt = accAlt * barometerConfig->baro_cf_alt + (float)BaroAlt * (1.0f - barometerConfig->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
     vel += vel_acc;
 
@@ -325,9 +406,12 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     // set vario
     vario = applyDeadband(vel_tmp, 5);
-
-    altHoldThrottleAdjustment = calculateAltHoldThrottleAdjustment(vel_tmp, accZ_tmp, accZ_old);
-
+     if (1)//!(ABS(rcData[THROTTLE] - initialThrottleHold) > rcControlsConfig->alt_hold_deadband))
+     {
+        altHoldThrottleAdjustment = calculateAltHoldThrottleAdjustment(vel_tmp, accZ_tmp, accZ_old);
+     }//dronadrona_1200am
+    Temp=pidProfile->I8[PIDALT];
+    barometerConfig->baro_cf_alt=1-Temp/1000 ;
     accZ_old = accZ_tmp;
 }
 

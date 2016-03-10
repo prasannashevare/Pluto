@@ -90,10 +90,10 @@ enum {
 };
 
 /* VBAT monitoring interval (in microseconds) - 1s*/
-#define VBATINTERVAL (6 * 3500)       
+#define VBATINTERVAL (6 * 3500)
 /* IBat monitoring interval (in microseconds) - 6 default looptimes */
-#define IBATINTERVAL (6 * 3500)       
-
+#define IBATINTERVAL (6 * 3500)
+extern rollAndPitchInclination_t inclination ;//drona
 uint32_t currentTime = 0;
 uint32_t previousTime = 0;
 uint16_t cycleTime = 0;         // this is the number in micro second to achieve a full loop, it can differ a little and is taken into account in the PID loop
@@ -114,6 +114,8 @@ typedef void (*pidControllerFuncPtr)(pidProfile_t *pidProfile, controlRateConfig
         uint16_t max_angle_inclination, rollAndPitchTrims_t *angleTrim, rxConfig_t *rxConfig);            // pid controller function prototype
 
 extern pidControllerFuncPtr pid_controller;
+
+
 
 void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t *rollAndPitchTrimsDelta)
 {
@@ -159,6 +161,49 @@ bool isCalibrating()
 
     return (!isAccelerationCalibrationComplete() && sensors(SENSOR_ACC)) || (!isGyroCalibrationComplete());
 }
+/** failsafe function _drona*/
+
+void crashsafe(void)
+{
+    if((ABS(inclination.values.rollDeciDegrees) > 700 || ABS(inclination.values.pitchDeciDegrees)>700 || (ABS(accSmooth[0])>5000)||(ABS(accSmooth[1])>5000)) && (FLIGHT_MODE(ANGLE_MODE)))
+    //if((ABS(accSmooth[0])>3000)||(ABS(accSmooth[1])>3000))
+    {
+         //led0_op(true);//drona led; Drone has possibly Crashed, Disarm
+         mwDisarm();
+    }
+    else
+    {
+         //led0_op(false);//drona led
+    }
+
+}
+
+
+
+void led0_op(bool status)//Drona led ;Functions to control LED0
+{
+    if (status)
+        LED0_ON;
+    else
+        LED0_OFF;
+}
+
+void led1_op(bool status)//Drona led ;Functions to control LED0
+{
+    if (status)
+        LED1_ON;
+    else
+        LED1_OFF;
+}
+
+void led2_op(bool status)//Drona led ;Functions to control LED0
+{
+    if (status)
+        LED2_ON;
+    else
+        LED2_OFF;
+}
+
 
 void annexCode(void)
 {
@@ -226,7 +271,7 @@ void annexCode(void)
     tmp = (uint32_t)(tmp - masterConfig.rxConfig.mincheck) * PWM_RANGE_MIN / (PWM_RANGE_MAX - masterConfig.rxConfig.mincheck);       // [MINCHECK;2000] -> [0;1000]
     tmp2 = tmp / 100;
     rcCommand[THROTTLE] = lookupThrottleRC[tmp2] + (tmp - tmp2 * 100) * (lookupThrottleRC[tmp2 + 1] - lookupThrottleRC[tmp2]) / 100;    // [0;1000] -> expo -> [MINTHROTTLE;MAXTHROTTLE]
-
+    //whats happening ?
     if (FLIGHT_MODE(HEADFREE_MODE)) {
         float radDiff = degreesToRadians(heading - headFreeModeHold);
         float cosDiff = cos_approx(radDiff);
@@ -255,7 +300,7 @@ void annexCode(void)
     beeperUpdate();          //call periodic beeper handler
 
     if (ARMING_FLAG(ARMED)) {
-        LED0_ON;
+        LED0_ON; //drona
     } else {
         if (IS_RC_MODE_ACTIVE(BOXARM) == 0) {
             ENABLE_ARMING_FLAG(OK_TO_ARM);
@@ -300,7 +345,9 @@ void mwDisarm(void)
 {
     if (ARMING_FLAG(ARMED)) {
         DISABLE_ARMING_FLAG(ARMED);
-
+        //led2_op(0);//drona led
+        //led1_op(0);
+        //led0_op(1);
 #ifdef BLACKBOX
         if (feature(FEATURE_BLACKBOX)) {
             finishBlackbox();
@@ -333,6 +380,9 @@ void mwArm(void)
         if (!ARMING_FLAG(PREVENT_ARMING)) {
             ENABLE_ARMING_FLAG(ARMED);
             headFreeModeHold = heading;
+           // led2_op(1);//drona led
+           // led1_op(1);//drona led
+           // led0_op(0);//drona led
 
 #ifdef BLACKBOX
             if (feature(FEATURE_BLACKBOX)) {
@@ -606,11 +656,11 @@ void processRx(void)
         DISABLE_FLIGHT_MODE(HORIZON_MODE);
     }
 
-    if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) {
+    /*if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) {
         LED1_ON;
     } else {
         LED1_OFF;
-    }
+    }*/ //drona led
 
 #ifdef  MAG
     if (sensors(SENSOR_ACC) || sensors(SENSOR_MAG)) {
@@ -710,7 +760,7 @@ void loop(void)
 #endif
 
     updateRx(currentTime);
-
+    crashsafe();//drona crashsafe
     if (shouldProcessRx(currentTime)) {
         processRx();
         isRXDataNew = true;
@@ -793,7 +843,14 @@ void loop(void)
             if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE)) {
                 applyAltHold(&masterConfig.airplaneConfig);
             }
-        }
+            /*else//drona led
+            {
+                led0_op(0);
+                led1_op(0);
+            }*///drona led
+            }
+
+
 #endif
 
         // If we're armed, at minimum throttle, and we do arming via the

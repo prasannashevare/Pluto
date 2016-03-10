@@ -23,6 +23,8 @@
 
 extern int32_t AltHold;
 extern int32_t vario;
+extern int16_t accalttemp;
+extern barometerConfig_t *barometerConfig_tmp;
 
 void configureAltitudeHold(pidProfile_t *initialPidProfile, barometerConfig_t *intialBarometerConfig, rcControlsConfig_t *initialRcControlsConfig, escAndServoConfig_t *initialEscAndServoConfig);
 void applyAltHold(airplaneConfig_t *airplaneConfig);
