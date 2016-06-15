@@ -165,7 +165,12 @@ bool isCalibrating()
 
 void crashsafe(void)
 {
-
+    if ((ABS(inclination.values.rollDeciDegrees) > 700 ||
+         ABS(inclination.values.pitchDeciDegrees) > 700)) //to indicate that a crash has occurred//
+    {
+        mwDisarm();
+        ErrorLed(4);
+    }
 
 }
 
@@ -975,7 +980,7 @@ void LedActive(void)
 
 
 
-void ErrorLed(void) { //delay is used for the disproportional glowing of the LED//
+void ErrorLed(int Indicator) { //delay is used for the disproportional glowing of the LED//
     int32_t LedTime;
     int32_t OFFTime;
     static int delay = 0;
@@ -1005,9 +1010,8 @@ void ErrorLed(void) { //delay is used for the disproportional glowing of the LED
                         condition = false;
                     }
                         break;
-                    case 4: {                   //to indicate that a crash has occurred//
-                        if ((ABS(inclination.values.rollDeciDegrees) > 700 ||
-                             ABS(inclination.values.pitchDeciDegrees) > 700))
+                    case 4: {
+
                             //if((ABS(accSmooth[0])>3000)||(ABS(accSmooth[1])>3000))
                         {
                             led0_op(true);//drona led; Drone has possibly Crashed, Disarm
