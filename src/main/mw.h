@@ -28,3 +28,5 @@ void crashsafe(void); //drona
 void led0_op(bool status);//drona
 void led1_op(bool status);//drona
 void led2_op(bool status);//drona
+void LEDActive(void); //drona
+void ErrorLed(int Indicator);//drona

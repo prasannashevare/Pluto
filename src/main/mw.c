@@ -117,7 +117,6 @@ extern pidControllerFuncPtr pid_controller;
 
 
 
-
 void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t *rollAndPitchTrimsDelta)
 {
     currentProfile->accelerometerTrims.values.roll += rollAndPitchTrimsDelta->values.roll;
@@ -166,15 +165,11 @@ bool isCalibrating()
 
 void crashsafe(void)
 {
-    if((ABS(inclination.values.rollDeciDegrees) > 700 || ABS(inclination.values.pitchDeciDegrees)>700))// || (ABS(accSmooth[0])>5000)||(ABS(accSmooth[1])>5000)) && (FLIGHT_MODE(ANGLE_MODE)))
-    //if((ABS(accSmooth[0])>3000)||(ABS(accSmooth[1])>3000))
+    if ((ABS(inclination.values.rollDeciDegrees) > 700 ||
+         ABS(inclination.values.pitchDeciDegrees) > 700)) //to indicate that a crash has occurred//
     {
-         led0_op(true);//drona led; Drone has possibly Crashed, Disarm
-         mwDisarm();
-    }
-    else
-    {
-         led0_op(false);//drona led
+        mwDisarm();
+        ErrorLed(4);
     }
 
 }
@@ -772,21 +767,29 @@ void filterRc(void){
     }
 }
 
-void loop(void)
-{
+void loop(void) {
     static uint32_t loopTime;
 #if defined(BARO) || defined(SONAR)
     static bool haveProcessedAnnexCodeOnce = false;
+
+    //LedActive();
+    ErrorLed() ;
+
+
+
+
 #endif
 
     updateRx(currentTime);
     crashsafe();//drona crashsafe
-    if(rcData[AUX2]>1500)
-        {led3_op(true);
-        led4_op(true);}
-    else
-        {led3_op(false);
-        led4_op(false);}
+    if (rcData[AUX2] > 1500) {
+        led3_op(true);
+        led4_op(true);
+    }
+    else {
+        led3_op(false);
+        led4_op(false);
+    }
 
     if (shouldProcessRx(currentTime)) {
         processRx();
@@ -841,7 +844,8 @@ void loop(void)
             static filterStatePt1_t gyroADCState[XYZ_AXIS_COUNT];
 
             for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
-        	    gyroADC[axis] = filterApplyPt1(gyroADC[axis], &gyroADCState[axis], currentProfile->pidProfile.gyro_cut_hz);
+                gyroADC[axis] = filterApplyPt1(gyroADC[axis], &gyroADCState[axis],
+                                               currentProfile->pidProfile.gyro_cut_hz);
             }
         }
 
@@ -857,7 +861,7 @@ void loop(void)
 
 #ifdef MAG
         if (sensors(SENSOR_MAG)) {
-        	updateMagHold();
+            updateMagHold();
         }
 #endif
 
@@ -885,12 +889,13 @@ void loop(void)
         // motors do not spin up while we are trying to arm or disarm.
         // Allow yaw control for tricopters if the user wants the servo to move even when unarmed.
         if (isUsingSticksForArming() && rcData[THROTTLE] <= masterConfig.rxConfig.mincheck
-#ifndef USE_QUAD_MIXER_ONLY
-                && !((masterConfig.mixerMode == MIXER_TRI || masterConfig.mixerMode == MIXER_CUSTOM_TRI) && masterConfig.mixerConfig.tri_unarmed_servo)
-                && masterConfig.mixerMode != MIXER_AIRPLANE
-                && masterConfig.mixerMode != MIXER_FLYING_WING
+            #ifndef USE_QUAD_MIXER_ONLY
+            && !((masterConfig.mixerMode == MIXER_TRI || masterConfig.mixerMode == MIXER_CUSTOM_TRI) &&
+                 masterConfig.mixerConfig.tri_unarmed_servo)
+            && masterConfig.mixerMode != MIXER_AIRPLANE
+            && masterConfig.mixerMode != MIXER_FLYING_WING
 #endif
-        ) {
+                ) {
             rcCommand[YAW] = 0;
         }
 
@@ -909,11 +914,11 @@ void loop(void)
 
         // PID - note this is function pointer set by setPIDController()
         pid_controller(
-            &currentProfile->pidProfile,
-            currentControlRateProfile,
-            masterConfig.max_angle_inclination,
-            &currentProfile->accelerometerTrims,
-            &masterConfig.rxConfig
+                &currentProfile->pidProfile,
+                currentControlRateProfile,
+                masterConfig.max_angle_inclination,
+                &currentProfile->accelerometerTrims,
+                &masterConfig.rxConfig
         );
 
         mixTable();
@@ -946,3 +951,96 @@ void loop(void)
     }
 #endif
 }
+
+
+void LedActive(void)
+{   //Safe is the variable used to indicate that an error has occurred //
+
+    if (Safe != 1) {
+        if (ARMING_FLAG(ARMED) && DISABLE_ARMING_FLAG(PREVENT_ARMING)) { //to indicate if drone is armed//
+            led2_op(true);
+            led0_op(true);
+            led1_op(true);
+        }
+        else {
+            led2_op(false);
+            led1_op(false);
+            if( ARMING_FLAG(OK_TO_ARM) && DISABLE_ARMING_FLAG(PREVENT_ARMING) ){ //to indicate if drone is okay to arm//
+                led2_op(true);
+                led1_op(true);
+
+            }
+            else{
+                led2_op(false);
+                led1_op(false);
+                }
+            }
+        }
+    }
+
+
+
+void ErrorLed(int Indicator) { //delay is used for the disproportional glowing of the LED//
+    int32_t LedTime;
+    int32_t OFFTime;
+    static int delay = 0;
+    static int32_t ActiveTime = 3000;
+    LedTime = millis(); //indicates the current time in milliseconds//
+    if (Safe == 0) {
+        if ((int32_t)(LedTime - ActiveTime) >= 150) {//LedTime - ActiveTime is the time for which the LED should be ON//
+
+            if (delay <= 1 && condition == true) {
+                switch (Indicator) {
+                    case 1: {                   //to indicate that battery is too low to arm//
+                        led1_op(true);
+                        led0_op(true);
+                        led2_op(true);
+                        condition = false;
+                    }
+                        break;
+                    case 2: {                 //to indicate that battery is to low during flight//
+                        led0_op(true);
+                        led1_op(true);
+                        condition = false;
+                    }
+                        break;
+                    case 3: {                  //to indicate that signal loss has occurred//
+                        led0_op(true);
+                        led2_op(true);
+                        condition = false;
+                    }
+                        break;
+                    case 4: {
+
+                            //if((ABS(accSmooth[0])>3000)||(ABS(accSmooth[1])>3000))
+                        {
+                            led0_op(true);//drona led; Drone has possibly Crashed, Disarm
+                            condition = false;
+                        }
+                    }
+                        break;
+
+                }
+            }
+
+
+            else {
+                OFFTime = millis();  //indicates the current time in milliseconds//
+                if (((int32_t)(OFFTime - ActiveTime) >= 150) && condition == false && (delay >= 2 && delay <= 4)) { //OFFTime-ActiveTime is the time for which the LED should be OFF//
+                    led1_op(false);
+                    led0_op(false);
+                    led2_op(false);
+                    condition = !condition;
+                }
+
+
+            }
+            delay++;
+            ActiveTime = LedTime + 800;
+            if (delay == 4)
+                delay = 0;
+
+        }
+    }
+}
+
