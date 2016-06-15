@@ -17,7 +17,7 @@
 
 #include "stdbool.h"
 #include "stdint.h"
-
+#include "flight/failsafe.h"
 #include "platform.h"
 
 #include "common/maths.h"
@@ -45,10 +45,11 @@ uint16_t batteryWarningVoltage;
 uint16_t batteryCriticalVoltage;
 
 uint16_t vbat = 0;                   // battery voltage in 0.1V steps (filtered)
+uint16_t vbatscaled = 0;
 uint16_t vbatLatestADC = 0;         // most recent unsmoothed raw reading from vbat ADC
 uint16_t amperageLatestADC = 0;     // most recent raw reading from current ADC
 
-int32_t amperage = 0;               // amperage read by current sensor in centiampere (1/100th A)
+int32_t amperage;               // amperage read by current sensor in centiampere (1/100th A)
 int32_t mAhDrawn = 0;               // milliampere hours drawn from the battery since start
 
 batteryConfig_t *batteryConfig;
@@ -60,7 +61,9 @@ uint16_t batteryAdcToVoltage(uint16_t src)
 {
     // calculate battery voltage based on ADC reading
     // result is Vbatt in 0.1V steps. 3.3V = ADC Vref, 0xFFF = 12bit adc, 110 = 11:1 voltage divider (10k:1k) * 10 for 0.1V
-    return ((((uint32_t)src * batteryConfig->vbatscale * 33 + (0xFFF * 5)) / (0xFFF * batteryConfig->vbatresdivval))/batteryConfig->vbatresdivmultiplier);
+    vbatscaled = (((uint32_t)src * 429)/4095);
+    return (((((uint32_t)src * batteryConfig->vbatscale * 33 + (0xFFF * 5)) / (0xFFF * batteryConfig->vbatresdivval)))/batteryConfig->vbatresdivmultiplier);
+
 }
 
 static void updateBatteryVoltage(void)
@@ -121,6 +124,7 @@ void updateBattery(void)
             }
             break;
         case BATTERY_WARNING:
+            DISABLE_ARMING_FLAG(PREVENT_ARMING);
             if (vbat <= (batteryCriticalVoltage - VBATT_HYSTERESIS)) {
                 batteryState = BATTERY_CRITICAL;
                 beeper(BEEPER_BAT_CRIT_LOW);
@@ -128,14 +132,18 @@ void updateBattery(void)
                 batteryState = BATTERY_OK;
             } else {
                 beeper(BEEPER_BAT_LOW);
+                failsafeOnLowBattery();
             }
+
             break;
         case BATTERY_CRITICAL:
+
             if (vbat > (batteryCriticalVoltage + VBATT_HYSTERESIS)){
                 batteryState = BATTERY_WARNING;
                 beeper(BEEPER_BAT_LOW);
             } else {
                 beeper(BEEPER_BAT_CRIT_LOW);
+                failsafeOnLowBattery();
             }
             break;
         case BATTERY_NOT_PRESENT:

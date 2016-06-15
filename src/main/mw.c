@@ -117,6 +117,7 @@ extern pidControllerFuncPtr pid_controller;
 
 
 
+
 void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t *rollAndPitchTrimsDelta)
 {
     currentProfile->accelerometerTrims.values.roll += rollAndPitchTrimsDelta->values.roll;
@@ -165,15 +166,15 @@ bool isCalibrating()
 
 void crashsafe(void)
 {
-    if((ABS(inclination.values.rollDeciDegrees) > 700 || ABS(inclination.values.pitchDeciDegrees)>700 || (ABS(accSmooth[0])>5000)||(ABS(accSmooth[1])>5000)) && (FLIGHT_MODE(ANGLE_MODE)))
+    if((ABS(inclination.values.rollDeciDegrees) > 700 || ABS(inclination.values.pitchDeciDegrees)>700))// || (ABS(accSmooth[0])>5000)||(ABS(accSmooth[1])>5000)) && (FLIGHT_MODE(ANGLE_MODE)))
     //if((ABS(accSmooth[0])>3000)||(ABS(accSmooth[1])>3000))
     {
-         //led0_op(true);//drona led; Drone has possibly Crashed, Disarm
+         led0_op(true);//drona led; Drone has possibly Crashed, Disarm
          mwDisarm();
     }
     else
     {
-         //led0_op(false);//drona led
+         led0_op(false);//drona led
     }
 
 }
@@ -202,6 +203,22 @@ void led2_op(bool status)//Drona led ;Functions to control LED0
         LED2_ON;
     else
         LED2_OFF;
+}
+
+void led3_op(bool status)//Drona led ;Functions to control LED0
+{
+    if (status)
+        LED3_ON;
+    else
+        LED3_OFF;
+}
+
+void led4_op(bool status)//Drona led ;Functions to control LED0
+{
+    if (status)
+        LED4_ON;
+    else
+        LED4_OFF;
 }
 
 
@@ -300,7 +317,7 @@ void annexCode(void)
     beeperUpdate();          //call periodic beeper handler
 
     if (ARMING_FLAG(ARMED)) {
-        LED0_ON; //drona
+        //LED0_ON; //drona
     } else {
         if (IS_RC_MODE_ACTIVE(BOXARM) == 0) {
             ENABLE_ARMING_FLAG(OK_TO_ARM);
@@ -345,9 +362,10 @@ void mwDisarm(void)
 {
     if (ARMING_FLAG(ARMED)) {
         DISABLE_ARMING_FLAG(ARMED);
+		
         //led2_op(0);//drona led
         //led1_op(0);
-        //led0_op(1);
+        //led0_op(false);
 #ifdef BLACKBOX
         if (feature(FEATURE_BLACKBOX)) {
             finishBlackbox();
@@ -372,6 +390,7 @@ void mwArm(void)
 {
     if (ARMING_FLAG(OK_TO_ARM)) {
         if (ARMING_FLAG(ARMED)) {
+			//led0_op(true);
             return;
         }
         if (IS_RC_MODE_ACTIVE(BOXFAILSAFE)) {
@@ -558,9 +577,10 @@ void processRx(void)
     updateRSSI(currentTime);
 
     if (feature(FEATURE_FAILSAFE)) {
+		
 
         if (currentTime > FAILSAFE_POWER_ON_DELAY_US && !failsafeIsMonitoring()) {
-            failsafeStartMonitoring();
+            failsafeStartMonitoring();//nothing much; monitering = true
         }
 
         failsafeUpdateState();
@@ -761,6 +781,13 @@ void loop(void)
 
     updateRx(currentTime);
     crashsafe();//drona crashsafe
+    if(rcData[AUX2]>1500)
+        {led3_op(true);
+        led4_op(true);}
+    else
+        {led3_op(false);
+        led4_op(false);}
+
     if (shouldProcessRx(currentTime)) {
         processRx();
         isRXDataNew = true;

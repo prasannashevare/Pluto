@@ -79,8 +79,8 @@ void configureFailsafe(void)
     failsafeConfig.failsafe_delay = 10; // 1 second
     failsafeConfig.failsafe_off_delay = 50; // 5 seconds
     failsafeConfig.failsafe_kill_switch = false;
-    failsafeConfig.failsafe_throttle = 1200;
-    failsafeConfig.failsafe_throttle_low_delay = 50; // 5 seconds
+    failsafeConfig.failsafe_throttle = 1500; //1200
+    failsafeConfig.failsafe_throttle_low_delay = 50;
     sysTickUptime = 0;
 }
 //
@@ -235,7 +235,7 @@ TEST(FlightFailsafeTest, TestFailsafeCausesLanding)
 TEST(FlightFailsafeTest, TestFailsafeDetectsRxLossAndJustDisarms)
 {
     // given
-    DISABLE_ARMING_FLAG(ARMED);
+    ENABLE_ARMING_FLAG(ARMED); //Changed from Disable to prevent dropping out of the sky like a dead bird :P
     resetCallCounters();
 
     // and

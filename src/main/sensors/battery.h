@@ -27,8 +27,8 @@
 
 typedef enum {
     CURRENT_SENSOR_NONE = 0,
-    CURRENT_SENSOR_ADC,
-    CURRENT_SENSOR_VIRTUAL,
+    CURRENT_SENSOR_ADC = 1,
+    CURRENT_SENSOR_VIRTUAL = 2,
     CURRENT_SENSOR_MAX = CURRENT_SENSOR_VIRTUAL
 } currentSensor_e;
 
@@ -57,6 +57,7 @@ typedef enum {
 } batteryState_e;
 
 extern uint16_t vbat;
+extern uint16_t vbatscaled;
 extern uint16_t vbatRaw;
 extern uint16_t vbatLatestADC;
 extern uint8_t batteryCellCount;

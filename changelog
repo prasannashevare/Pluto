@@ -1,0 +1,6 @@
+battery 3.32 V Land
+Failsafe land with direction control and disarm on land
+Failsafe on connectionloss
+remove crashsafe acc trigger
+battery 3.6V to arm
+disarmswitch + low throttle in failsafe landing to disarm
