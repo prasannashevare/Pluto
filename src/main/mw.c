@@ -105,6 +105,10 @@ uint8_t motorControlEnable = false;
 
 int16_t telemTemperature1;      // gyro sensor temperature
 static uint32_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
+void LedActive(void); //drona
+void ErrorLed(int Indicator);//drona
+extern bool Safe;
+bool condition = true;
 
 extern uint8_t dynP8[3], dynI8[3], dynD8[3], PIDweight[3];
 
@@ -169,6 +173,7 @@ void crashsafe(void)
          ABS(inclination.values.pitchDeciDegrees) > 700)) //to indicate that a crash has occurred//
     {
         mwDisarm();
+        Safe=true;
         ErrorLed(4);
     }
 
@@ -772,8 +777,8 @@ void loop(void) {
 #if defined(BARO) || defined(SONAR)
     static bool haveProcessedAnnexCodeOnce = false;
 
-    //LedActive();
-    ErrorLed() ;
+    LedActive();
+    ErrorLed(0) ;
 
 
 
@@ -956,37 +961,43 @@ void loop(void) {
 void LedActive(void)
 {   //Safe is the variable used to indicate that an error has occurred //
 
-    if (Safe != 1) {
-        if (ARMING_FLAG(ARMED) && DISABLE_ARMING_FLAG(PREVENT_ARMING)) { //to indicate if drone is armed//
-            led2_op(true);
-            led0_op(true);
+    if (!Safe)
+    {
+        if (ARMING_FLAG(ARMED))//Plain old armed 
+        {    
             led1_op(true);
+            led0_op(true);
+            led2_op(true);
         }
-        else {
-            led2_op(false);
-            led1_op(false);
-            if( ARMING_FLAG(OK_TO_ARM) && DISABLE_ARMING_FLAG(PREVENT_ARMING) ){ //to indicate if drone is okay to arm//
-                led2_op(true);
+        else
+        {
+            if(ARMING_FLAG(OK_TO_ARM))//not armed but ok to arm
+            {
                 led1_op(true);
-
+                led0_op(false);
+                led2_op(true);
             }
-            else{
+            else //not armed not ok to arm
+            {
                 led2_op(false);
                 led1_op(false);
-                }
             }
         }
+        
     }
+}
 
 
 
-void ErrorLed(int Indicator) { //delay is used for the disproportional glowing of the LED//
+void ErrorLed(int Indicator)//delay is used for the disproportional glowing of the LED
+{
     int32_t LedTime;
     int32_t OFFTime;
     static int delay = 0;
     static int32_t ActiveTime = 3000;
     LedTime = millis(); //indicates the current time in milliseconds//
-    if (Safe == 0) {
+    if (Safe)
+    {
         if ((int32_t)(LedTime - ActiveTime) >= 150) {//LedTime - ActiveTime is the time for which the LED should be ON//
 
             if (delay <= 1 && condition == true) {
@@ -1020,6 +1031,13 @@ void ErrorLed(int Indicator) { //delay is used for the disproportional glowing o
                     }
                         break;
 
+                    case 0:
+                    {
+                        led1_op(false);//TODO cleanup
+                        led0_op(false);
+                        led2_op(false);
+                    }
+
                 }
             }
 
@@ -1043,4 +1061,3 @@ void ErrorLed(int Indicator) { //delay is used for the disproportional glowing o
         }
     }
 }
-

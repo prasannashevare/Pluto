@@ -141,6 +141,9 @@ static uint16_t deadband3dThrottle;           // default throttle deadband from 
 extern uint16_t vbat; //test
 extern uint16_t vbatscaled;
 throttleStatus_e throttleStatus;
+bool Safe=false; //led logic
+void ErrorLed(int Indicator);
+
 
 static void failsafeReset(void)
 {
@@ -233,10 +236,14 @@ void failsafeOnLowBattery(void)
     }
     else{
         ENABLE_ARMING_FLAG(PREVENT_ARMING);
+        Safe=true;
+        ErrorLed(1);
     }
     if(vbatscaled<333){
         failsafeState.phase=FAILSAFE_LANDING;
         failsafeActivate();
+        Safe=true;
+        ErrorLed(2);
     }
 
 }
@@ -349,6 +356,8 @@ void failsafeUpdateState(void)
 			/*led0_op(false);
 			led2_op(false);
 			led1_op(true);*/
+                Safe=true;
+                ErrorLed(3);
                 if (receivingRxData) {
                     failsafeState.phase = FAILSAFE_RX_LOSS_RECOVERED;
                 } else {
@@ -395,6 +404,8 @@ void failsafeUpdateState(void)
 			led0_op(true);
 			led1_op(true);*/
                 // Monitoring the rx link to allow rearming when it has become good for > `receivingRxDataPeriodPreset` time.
+                Safe=true;
+                ErrorLed(3);
                 if (receivingRxData) {
                     if (millis() > failsafeState.receivingRxDataPeriod) {
                         // rx link is good now, when arming via ARM switch, it must be OFF first
