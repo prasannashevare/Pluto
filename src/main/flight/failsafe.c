@@ -229,10 +229,10 @@ static void failsafeApplyControlInput(void)
 
 }
 
-    //Adding new stuff for battery
+    //Adding new stuff for battery (Varun)
 void failsafeOnLowBattery(void)
 {
-    if (vbat > batteryCriticalVoltage) {   //indicating inflight
+    if (vbat > batteryCriticalVoltage) {
         DISABLE_ARMING_FLAG(PREVENT_ARMING);
     }
     else{
@@ -242,7 +242,7 @@ void failsafeOnLowBattery(void)
     if(vbatscaled<333){
         failsafeState.phase=FAILSAFE_LANDING;
         failsafeActivate();
-        Indicator|=(1<<1);
+        Indicator|=(1<<2);
         ENABLE_FLIGHT_MODE(ANGLE_MODE);
         ENABLE_ARMING_FLAG(ARMED);
     }
@@ -363,10 +363,10 @@ void failsafeUpdateState(void)
                 } else {
                     // Stabilize, and set Throttle to specified level
                     failsafeActivate();
-                    Indicator|=(1<<2);
+                    Indicator|=(1<<1);
                 }
                 reprocessState = true;
-                Indicator|=(1<<2);
+                Indicator|=(1<<1);
                 break;
 
             case FAILSAFE_LANDING:
@@ -397,7 +397,7 @@ void failsafeUpdateState(void)
             case FAILSAFE_LANDED:
 			/*led0_op(true);
 			led2_op(true);
-			led1_op(false);*/ Indicator|=(1<<2);
+			led1_op(false);*/ Indicator|=(1<<1);
                 //ENABLE_ARMING_FLAG(PREVENT_ARMING); // To prevent accidently rearming by an intermittent rx link
                 mwDisarm();
                 failsafeState.receivingRxDataPeriod = millis() + failsafeState.receivingRxDataPeriodPreset; // set required period of valid rxData

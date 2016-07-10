@@ -84,8 +84,8 @@
 // June 2013     V2.2-dev
 typedef enum{
     Low_battery=(1<<0),
-    LowBattery_inFlight=(1<<1),
-    Signal_loss=(1<<2),
+    Signal_loss=(1<<1),
+    LowBattery_inFlight=(1<<2),
     Crash=(1<<3)
 
 }ErrorStatus_e;
@@ -976,7 +976,7 @@ void loop(void) {
 
 
 
-void LedActive(void)
+void LedActive(void)//(Sagar)
 {   //Safe is the variable used to indicate that an error has occurred //
 
 
@@ -1006,7 +1006,7 @@ void LedActive(void)
 
 
 
-void ErrorLed(void)//delay is used for the disproportional glowing of the LED
+void ErrorLed(void)//delay is used for the disproportional glowing of the LED (Sagar)
 {
     int32_t LedTime;
     int delay_time=200;
@@ -1019,6 +1019,15 @@ void ErrorLed(void)//delay is used for the disproportional glowing of the LED
 
             if (count < 1 ) {
                 switch (Indicator) {
+                    case LowBattery_inFlight: {                   //to indicate that battery is too low to arm//
+                        led1_op(true);
+                        led0_op(true);
+                        led2_op(true);
+                        /*if(!(vbat > batteryCriticalVoltage)){
+                            Indicator=0;
+                        }*/
+                    }
+                        break;
                     case Low_battery: {                 //to indicate that battery is to low during flight//
                         led0_op(true);
                         led1_op(true);
@@ -1028,7 +1037,7 @@ void ErrorLed(void)//delay is used for the disproportional glowing of the LED
                     }
                         break;
                     case Signal_loss: {                  //to indicate that signal loss has occurred//
-                        led0_op(true);
+                        led1_op(true);
                         led2_op(true);
                         // if(!receivingRxData){
                         //Indicator=0;
@@ -1041,15 +1050,6 @@ void ErrorLed(void)//delay is used for the disproportional glowing of the LED
 
                         /*if(!(ABS(inclination.values.rollDeciDegrees) > 500 ||
                              ABS(inclination.values.pitchDeciDegrees) > 500)){
-                            Indicator=0;
-                        }*/
-                    }
-                        break;
-                    case LowBattery_inFlight: {                   //to indicate that battery is too low to arm//
-                        led1_op(true);
-                        led0_op(true);
-                        led2_op(true);
-                        /*if(!(vbat > batteryCriticalVoltage)){
                             Indicator=0;
                         }*/
                     }
@@ -1073,7 +1073,7 @@ void ErrorLed(void)//delay is used for the disproportional glowing of the LED
             ActiveTime = LedTime + delay_time;
             count=(count)%4;
             }
-   // DISABLE_FLIGHT_MODE(FAILSAFE_MODE);
+    DISABLE_FLIGHT_MODE(FAILSAFE_MODE);
 
 }
 
