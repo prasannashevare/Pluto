@@ -131,8 +131,7 @@ void SetSysClock(void);
 // from system_stm32f10x.c
 void SetSysClock(bool overclock);
 #endif
-
-
+extern uint8_t ErrorStatusIndicator;
 
 typedef enum {
     SYSTEM_STATE_INITIALISING   = 0,

@@ -82,6 +82,18 @@
 #include "config/config_master.h"
 
 // June 2013     V2.2-dev
+typedef enum{
+    Low_battery=(1<<0),
+    LowBattery_inFlight=(1<<1),
+    Signal_loss=(1<<2),
+    Crash=(1<<3)
+
+}ErrorStatus_e;
+bool receivingRxData;
+extern uint16_t vbat;
+extern uint16_t vbatscaled;
+extern bool receivingRxData;
+extern uint16_t batteryCriticalVoltage;
 
 enum {
     ALIGN_GYRO = 0,
@@ -106,9 +118,10 @@ uint8_t motorControlEnable = false;
 int16_t telemTemperature1;      // gyro sensor temperature
 static uint32_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 void LedActive(void); //drona
-void ErrorLed(int Indicator);//drona
-extern bool Safe;
-bool condition = true;
+void ErrorLed(void);//drona
+uint8_t Indicator=0;
+
+
 
 extern uint8_t dynP8[3], dynI8[3], dynD8[3], PIDweight[3];
 
@@ -169,12 +182,12 @@ bool isCalibrating()
 
 void crashsafe(void)
 {
-    if ((ABS(inclination.values.rollDeciDegrees) > 700 ||
-         ABS(inclination.values.pitchDeciDegrees) > 700)) //to indicate that a crash has occurred//
+    if ((ABS(inclination.values.rollDeciDegrees) > 600 ||
+         ABS(inclination.values.pitchDeciDegrees) > 600)) //to indicate that a crash has occurred//
     {
+       Indicator|=(1<<3);
         mwDisarm();
-        Safe=true;
-        ErrorLed(4);
+
     }
 
 }
@@ -776,9 +789,13 @@ void loop(void) {
     static uint32_t loopTime;
 #if defined(BARO) || defined(SONAR)
     static bool haveProcessedAnnexCodeOnce = false;
-
+    if(!(Indicator==(1<<0)||Indicator==(1<<1)||Indicator==(1<<2)||Indicator==(1<<3))||ARMING_FLAG(ARMED))
+    { Indicator=0;
+    }
+    if(Indicator==0)
     LedActive();
-    ErrorLed(0) ;
+    else
+    ErrorLed() ;
 
 
 
@@ -958,11 +975,11 @@ void loop(void) {
 }
 
 
+
 void LedActive(void)
 {   //Safe is the variable used to indicate that an error has occurred //
 
-    if (!Safe)
-    {
+
         if (ARMING_FLAG(ARMED))//Plain old armed 
         {    
             led1_op(true);
@@ -984,80 +1001,80 @@ void LedActive(void)
             }
         }
         
-    }
+
 }
 
 
 
-void ErrorLed(int Indicator)//delay is used for the disproportional glowing of the LED
+void ErrorLed(void)//delay is used for the disproportional glowing of the LED
 {
     int32_t LedTime;
-    int32_t OFFTime;
-    static int delay = 0;
-    static int32_t ActiveTime = 3000;
+    int delay_time=200;
+    static int count = 0;
+    static int32_t ActiveTime = 2500;
+
     LedTime = millis(); //indicates the current time in milliseconds//
-    if (Safe)
-    {
-        if ((int32_t)(LedTime - ActiveTime) >= 150) {//LedTime - ActiveTime is the time for which the LED should be ON//
 
-            if (delay <= 1 && condition == true) {
+            if ((int32_t)(LedTime - ActiveTime) >= delay_time) {//LedTime - ActiveTime is the time for which the LED should be ON//
+
+            if (count < 1 ) {
                 switch (Indicator) {
-                    case 1: {                   //to indicate that battery is too low to arm//
+                    case Low_battery: {                 //to indicate that battery is to low during flight//
+                        led0_op(true);
+                        led1_op(true);
+                        /*if(!(vbatscaled<333)){
+                            Indicator=0;
+                        }*/
+                    }
+                        break;
+                    case Signal_loss: {                  //to indicate that signal loss has occurred//
+                        led0_op(true);
+                        led2_op(true);
+                        // if(!receivingRxData){
+                        //Indicator=0;
+
+                        //}
+                    }
+                        break;
+                    case Crash: {
+                        led0_op(true);//drona led; Drone has possibly Crashed, Disarm
+
+                        /*if(!(ABS(inclination.values.rollDeciDegrees) > 500 ||
+                             ABS(inclination.values.pitchDeciDegrees) > 500)){
+                            Indicator=0;
+                        }*/
+                    }
+                        break;
+                    case LowBattery_inFlight: {                   //to indicate that battery is too low to arm//
                         led1_op(true);
                         led0_op(true);
                         led2_op(true);
-                        condition = false;
-                    }
-                        break;
-                    case 2: {                 //to indicate that battery is to low during flight//
-                        led0_op(true);
-                        led1_op(true);
-                        condition = false;
-                    }
-                        break;
-                    case 3: {                  //to indicate that signal loss has occurred//
-                        led0_op(true);
-                        led2_op(true);
-                        condition = false;
-                    }
-                        break;
-                    case 4: {
-
-                            //if((ABS(accSmooth[0])>3000)||(ABS(accSmooth[1])>3000))
-                        {
-                            led0_op(true);//drona led; Drone has possibly Crashed, Disarm
-                            condition = false;
-                        }
+                        /*if(!(vbat > batteryCriticalVoltage)){
+                            Indicator=0;
+                        }*/
                     }
                         break;
 
-                    case 0:
-                    {
-                        led1_op(false);//TODO cleanup
-                        led0_op(false);
-                        led2_op(false);
-                    }
 
                 }
             }
 
 
             else {
-                OFFTime = millis();  //indicates the current time in milliseconds//
-                if (((int32_t)(OFFTime - ActiveTime) >= 150) && condition == false && (delay >= 2 && delay <= 4)) { //OFFTime-ActiveTime is the time for which the LED should be OFF//
+
+                if (count >= 1 ) {
                     led1_op(false);
                     led0_op(false);
                     led2_op(false);
-                    condition = !condition;
+
                 }
-
-
             }
-            delay++;
-            ActiveTime = LedTime + 800;
-            if (delay == 4)
-                delay = 0;
+            count++;
+            ActiveTime = LedTime + delay_time;
+            count=(count)%4;
+            }
+   // DISABLE_FLIGHT_MODE(FAILSAFE_MODE);
 
-        }
-    }
 }
+
+

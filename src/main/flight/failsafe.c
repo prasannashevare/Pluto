@@ -141,9 +141,10 @@ static uint16_t deadband3dThrottle;           // default throttle deadband from 
 extern uint16_t vbat; //test
 extern uint16_t vbatscaled;
 throttleStatus_e throttleStatus;
-bool Safe=false; //led logic
-void ErrorLed(int Indicator);
 
+void ErrorLed(void);
+extern uint8_t Indicator;
+//tern uint8_t ErrorStatus_Indicator;//
 
 static void failsafeReset(void)
 {
@@ -236,14 +237,14 @@ void failsafeOnLowBattery(void)
     }
     else{
         ENABLE_ARMING_FLAG(PREVENT_ARMING);
-        Safe=true;
-        ErrorLed(1);
+       Indicator|=(1<<0);
     }
     if(vbatscaled<333){
         failsafeState.phase=FAILSAFE_LANDING;
         failsafeActivate();
-        Safe=true;
-        ErrorLed(2);
+        Indicator|=(1<<1);
+        ENABLE_FLIGHT_MODE(ANGLE_MODE);
+        ENABLE_ARMING_FLAG(ARMED);
     }
 
 }
@@ -287,7 +288,7 @@ void failsafeUpdateState(void)
         return;
     }
 
-    bool receivingRxData = failsafeIsReceivingRxData();
+   bool receivingRxData = failsafeIsReceivingRxData();
     bool armed = ARMING_FLAG(ARMED);
     bool failsafeSwitchIsOn = IS_RC_MODE_ACTIVE(BOXFAILSAFE);
     beeperMode_e beeperMode = BEEPER_SILENCE;
@@ -356,15 +357,16 @@ void failsafeUpdateState(void)
 			/*led0_op(false);
 			led2_op(false);
 			led1_op(true);*/
-                Safe=true;
-                ErrorLed(3);
+
                 if (receivingRxData) {
                     failsafeState.phase = FAILSAFE_RX_LOSS_RECOVERED;
                 } else {
                     // Stabilize, and set Throttle to specified level
                     failsafeActivate();
+                    Indicator|=(1<<2);
                 }
                 reprocessState = true;
+                Indicator|=(1<<2);
                 break;
 
             case FAILSAFE_LANDING:
@@ -374,7 +376,11 @@ void failsafeUpdateState(void)
                 if (receivingRxData) {
                     failsafeState.phase = FAILSAFE_RX_LOSS_RECOVERED;
                     reprocessState = true;
+
                 }*/{
+               // Indicator|=(1<<2);
+                DISABLE_FLIGHT_MODE(FAILSAFE_MODE);
+                ENABLE_ARMING_FLAG(ARMED);
                 if (armed) {
                     failsafeApplyControlInput();
                     beeperMode = BEEPER_RX_LOST_LANDING;
@@ -391,12 +397,13 @@ void failsafeUpdateState(void)
             case FAILSAFE_LANDED:
 			/*led0_op(true);
 			led2_op(true);
-			led1_op(false);*/
-                ENABLE_ARMING_FLAG(PREVENT_ARMING); // To prevent accidently rearming by an intermittent rx link
+			led1_op(false);*/ Indicator|=(1<<2);
+                //ENABLE_ARMING_FLAG(PREVENT_ARMING); // To prevent accidently rearming by an intermittent rx link
                 mwDisarm();
                 failsafeState.receivingRxDataPeriod = millis() + failsafeState.receivingRxDataPeriodPreset; // set required period of valid rxData
                 failsafeState.phase = FAILSAFE_RX_LOSS_MONITORING;
                 reprocessState = true;
+                DISABLE_FLIGHT_MODE(FAILSAFE_MODE);
                 break;
 
             case FAILSAFE_RX_LOSS_MONITORING:
@@ -404,8 +411,7 @@ void failsafeUpdateState(void)
 			led0_op(true);
 			led1_op(true);*/
                 // Monitoring the rx link to allow rearming when it has become good for > `receivingRxDataPeriodPreset` time.
-                Safe=true;
-                ErrorLed(3);
+               // Indicator|=(1<<2);
                 if (receivingRxData) {
                     if (millis() > failsafeState.receivingRxDataPeriod) {
                         // rx link is good now, when arming via ARM switch, it must be OFF first
