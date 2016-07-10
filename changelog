@@ -9,6 +9,7 @@ Failsafe landing is triggered on loss of signal
 Crash safe is no longer triggered by accelerometer jerk. Only by angle exceeding the threshold.
 3.6V required to arm
 Emergency disarm during failsafe landing - disarmswitch + low throttle in failsafe landing to disarm
+Silenced PWM hum
 
 Sagar:
 
