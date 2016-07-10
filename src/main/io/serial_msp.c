@@ -89,13 +89,16 @@
 #include "io/serial_1wire.h"
 #endif
 static serialPort_t *mspSerialPort;
-
-
+extern uint8_t Indicator;
 uint16_t cycleTime; // FIXME dependency on mw.c
 extern uint16_t rssi; // FIXME dependency on mw.c
 //extern uint16_t initialThrottleHold_test; //DRONA
 //extern uint16_t debug_d0;//drona
 uint16_t debug_e11;
+
+extern uint16_t vbatLatestADC; //adding to read adc
+extern int32_t amperage;
+extern int32_t mAhDrawn;
 
 void useRcControlsConfig(modeActivationCondition_t *modeActivationConditions, escAndServoConfig_t *escAndServoConfigToUse, pidProfile_t *pidProfileToUse);
 
@@ -808,8 +811,9 @@ static bool processOutCommand(uint8_t cmdMSP)
               //DRONA
              // debug_e11 = currentProfile->pidProfile.pidController ; //drona
 
-
-        serialize16(1000*barometerConfig_tmp->baro_cf_alt);
+            //amperage=10;
+        //serialize16(1000*barometerConfig_tmp->baro_cf_alt); drona initial, changing to read adc
+            serialize16(Indicator);//added new
 #ifdef USE_I2C
         serialize16(i2cGetErrorCounter());
 #else

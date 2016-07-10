@@ -496,7 +496,7 @@ void timerChOvrHandlerInit(timerOvrHandlerRec_t *self, timerOvrHandlerCallback *
 // some synchronization mechanism is neccesary to avoid disturbing other channels (BASEPRI used now)
 static void timerChConfig_UpdateOverflow(timerConfig_t *cfg, TIM_TypeDef *tim) {
     timerOvrHandlerRec_t **chain = &cfg->overflowCallbackActive;
-    ATOMIC_BLOCK(NVIC_PRIO_TIMER) {
+    ATOMIC_BLOCK(NVIC_PRIO_TIMER){
         for(int i = 0; i < CC_CHANNELS_PER_TIMER; i++)
             if(cfg->overflowCallback[i]) {
                 *chain = cfg->overflowCallback[i];

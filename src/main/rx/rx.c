@@ -83,7 +83,7 @@ int16_t rcRaw[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // interval [1000;2000]
 int16_t rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // interval [1000;2000]
 uint32_t rcInvalidPulsPeriod[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 
-#define MAX_INVALID_PULS_TIME    300
+#define MAX_INVALID_PULS_TIME    600// original 300?? failsafe_drona
 #define PPM_AND_PWM_SAMPLE_COUNT 3
 
 #define DELAY_50_HZ (1000000 / 50)
@@ -340,7 +340,7 @@ void updateRx(uint32_t currentTime)
         if (rxDataReceived) {
             rxSignalReceived = true;
             rxIsInFailsafeMode = false;
-            needRxSignalBefore = currentTime + DELAY_5_HZ;
+            needRxSignalBefore = currentTime + DELAY_5_HZ + 300000;//temp fix drona failsafe_drona
         }
     }
 
@@ -412,7 +412,7 @@ static uint16_t getRxfailValue(uint8_t channel)
                     if (feature(FEATURE_3D))
                         return rxConfig->midrc;
                     else
-                        return rxConfig->rx_min_usec;
+                        return 1200;//rxConfig->rx_min_usec; drona_failsafe
             }
             /* no break */
 
@@ -492,18 +492,24 @@ static void detectAndApplySignalLossBehaviour(void)
 
         if (!validPulse) {
             if (currentMilliTime < rcInvalidPulsPeriod[channel]) {
+				//led1_op(true);
                 sample = rcData[channel];           // hold channel for MAX_INVALID_PULS_TIME
             } else {
+				//led1_op(false);
                 sample = getRxfailValue(channel);   // after that apply rxfail value
                 rxUpdateFlightChannelStatus(channel, validPulse);
             }
-        } else {
+			//led2_op(true);
+        } else {//Incase of a valid pulse update invalidpulseperiod = 300ms
             rcInvalidPulsPeriod[channel] = currentMilliTime + MAX_INVALID_PULS_TIME;
+			//led2_op(false);
         }
 
         if (rxIsDataDriven) {
-            rcData[channel] = sample;
+			//led0_op(true);
+            rcData[channel] = sample;//Normal op
         } else {
+			//led0_op(false);
             rcData[channel] = calculateNonDataDrivenChannel(channel, sample);
         }
     }

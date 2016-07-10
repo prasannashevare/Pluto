@@ -1,0 +1,24 @@
+Varun:
+
+varun.shijo@siesgst.ac.in
+9930373903
+
+Pluto emergency landing when battery hits 3.32V in flight
+Failsafe Landing tweaked such that direction stick control is retained
+Failsafe landing is triggered on loss of signal
+Crash safe is no longer triggered by accelerometer jerk. Only by angle exceeding the threshold.
+3.6V required to arm
+Emergency disarm during failsafe landing - disarmswitch + low throttle in failsafe landing to disarm
+Silenced PWM hum
+
+Sagar:
+
+seidnani1908@gmail.com
+9833307020
+
+LED framework for indicating above conditions
+Prioritized LED display according to conditions
+
+Current State (Issues):
+Arming switch fails after failsafe landing
+Prioritization buggy

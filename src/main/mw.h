@@ -28,3 +28,15 @@ void crashsafe(void); //drona
 void led0_op(bool status);//drona
 void led1_op(bool status);//drona
 void led2_op(bool status);//drona
+void LedActive(void); //drona
+void ErrorLed(void);//drona
+typedef enum{
+    Low_battery=(1<<0),
+    LowBattery_inFlight=(1<<1),
+    Signal_loss=(1<<2),
+    Crash=(1<<3)
+
+}ErrorStatus_e;
+extern uint8_t Indicator;
+
+

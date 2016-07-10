@@ -70,7 +70,7 @@
 #include "config/config_profile.h"
 #include "config/config_master.h"
 
-#define BRUSHED_MOTORS_PWM_RATE 16000
+#define BRUSHED_MOTORS_PWM_RATE 17500
 #define BRUSHLESS_MOTORS_PWM_RATE 400
 
 void useRcControlsConfig(modeActivationCondition_t *modeActivationConditions, escAndServoConfig_t *escAndServoConfigToUse, pidProfile_t *pidProfileToUse);
@@ -152,7 +152,7 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->I8[PITCH] = 35; //30;
     pidProfile->D8[PITCH] = 30; //23;
     pidProfile->P8[YAW] = 80; //85;
-    pidProfile->I8[YAW] = 40; //45;
+    pidProfile->I8[YAW] = 70; //45;
     pidProfile->D8[YAW] = 5; //0;
     pidProfile->P8[PIDALT] = 50;
     pidProfile->I8[PIDALT] = 0;
@@ -268,13 +268,13 @@ void resetBatteryConfig(batteryConfig_t *batteryConfig)
     batteryConfig->vbatscale = VBAT_SCALE_DEFAULT;
     batteryConfig->vbatresdivval = VBAT_RESDIVVAL_DEFAULT;
     batteryConfig->vbatresdivmultiplier = VBAT_RESDIVMULTIPLIER_DEFAULT;
-    batteryConfig->vbatmaxcellvoltage = 43;
-    batteryConfig->vbatmincellvoltage = 33;
-    batteryConfig->vbatwarningcellvoltage = 35;
-    batteryConfig->currentMeterOffset = 0;
-    batteryConfig->currentMeterScale = 400; // for Allegro ACS758LCB-100U (40mV/A)
-    batteryConfig->batteryCapacity = 0;
-    batteryConfig->currentMeterType = CURRENT_SENSOR_ADC;
+    batteryConfig->vbatmaxcellvoltage = 43; //43
+    batteryConfig->vbatmincellvoltage = 35;//33
+    batteryConfig->vbatwarningcellvoltage = 36;//35
+    batteryConfig->currentMeterOffset = 16;//pluto default 0
+    batteryConfig->currentMeterScale = 30; // for Allegro ACS758LCB-100U (40mV/A)     CHANGED for pluto, 400 default
+    batteryConfig->batteryCapacity = 350;
+    batteryConfig->currentMeterType = CURRENT_SENSOR_VIRTUAL; //ADC to VIRTUAL
 }
 
 #ifdef SWAP_SERIAL_PORT_0_AND_1_DEFAULTS
@@ -387,6 +387,7 @@ static void resetConf(void)
 #if defined(CJMCU) || defined(SPARKY) || defined(COLIBRI_RACE) || defined(MOTOLAB)
     //featureSet(FEATURE_RX_PPM);
 	featureSet(FEATURE_RX_MSP);
+    featureSet(FEATURE_CURRENT_METER);//testing virtual adc current measurement
 
 #endif
 
@@ -412,7 +413,7 @@ static void resetConf(void)
     masterConfig.boardAlignment.pitchDegrees = 0;
     masterConfig.boardAlignment.yawDegrees = 0;
     masterConfig.acc_hardware = ACC_DEFAULT;     // default/autodetect
-    masterConfig.max_angle_inclination = 120; //drona   // 50 degrees  Drona
+    masterConfig.max_angle_inclination = 200; //drona   // 50 degrees  Drona
     masterConfig.yaw_control_direction = 1;
     masterConfig.gyroConfig.gyroMovementCalibrationThreshold = 32;
 
@@ -440,7 +441,7 @@ static void resetConf(void)
     masterConfig.rxConfig.rssi_channel = 0;
     masterConfig.rxConfig.rssi_scale = RSSI_SCALE_DEFAULT;
     masterConfig.rxConfig.rssi_ppm_invert = 0;
-    masterConfig.rxConfig.rcSmoothing = 1;
+    masterConfig.rxConfig.rcSmoothing = 1;//Drona temp rc filter
 
     resetAllRxChannelRangeConfigurations(masterConfig.rxConfig.channelRanges);
 
@@ -530,9 +531,9 @@ static void resetConf(void)
     // Failsafe Variables
     masterConfig.failsafeConfig.failsafe_delay = 10;              // 1sec
     masterConfig.failsafeConfig.failsafe_off_delay = 200;         // 20sec
-    masterConfig.failsafeConfig.failsafe_throttle = 1000;         // default throttle off.
+    masterConfig.failsafeConfig.failsafe_throttle = 1300;         // default throttle off. (1000) changed
     masterConfig.failsafeConfig.failsafe_kill_switch = 0;         // default failsafe switch action is identical to rc link loss
-    masterConfig.failsafeConfig.failsafe_throttle_low_delay = 100; // default throttle low delay for "just disarm" on failsafe condition
+    masterConfig.failsafeConfig.failsafe_throttle_low_delay = 200; // default throttle low delay for "just disarm" on failsafe condition//drona_failsafe default = 100 changed
 
 #ifdef USE_SERVOS
     // servos

@@ -69,6 +69,8 @@ void useFailsafeConfig(failsafeConfig_t *failsafeConfigToUse);
 void failsafeStartMonitoring(void);
 void failsafeUpdateState(void);
 
+void failsafeOnLowBattery(void);
+
 failsafePhase_e failsafePhase();
 bool failsafeIsMonitoring(void);
 bool failsafeIsActive(void);
@@ -78,7 +80,7 @@ void failsafeOnRxResume(void);
 
 void failsafeOnValidDataReceived(void);
 void failsafeOnValidDataFailed(void);
-
+ void ErrorLed(void);
 
 
 

@@ -131,8 +131,7 @@ void SetSysClock(void);
 // from system_stm32f10x.c
 void SetSysClock(bool overclock);
 #endif
-
-
+extern uint8_t ErrorStatusIndicator;
 
 typedef enum {
     SYSTEM_STATE_INITIALISING   = 0,
@@ -242,7 +241,7 @@ void init(void)
     pwm_params.useParallelPWM = feature(FEATURE_RX_PARALLEL_PWM);
     pwm_params.useRSSIADC = feature(FEATURE_RSSI_ADC);
     pwm_params.useCurrentMeterADC = feature(FEATURE_CURRENT_METER)
-        && masterConfig.batteryConfig.currentMeterType == CURRENT_SENSOR_ADC;
+        && masterConfig.batteryConfig.currentMeterType == CURRENT_SENSOR_VIRTUAL; //REMEMBER REMEMBER
     pwm_params.useLEDStrip = feature(FEATURE_LED_STRIP);
     pwm_params.usePPM = feature(FEATURE_RX_PPM);
     pwm_params.useSerialRx = feature(FEATURE_RX_SERIAL);
@@ -394,6 +393,7 @@ void init(void)
     }
     LED0_OFF;   //drona
     LED1_OFF;     //drona led
+	LED2_OFF; //mOD FROM da
 
 #ifdef MAG
     if (sensors(SENSOR_MAG))

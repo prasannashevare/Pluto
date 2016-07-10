@@ -30,6 +30,7 @@
 
 
 #define PULSE_1MS   (1000)      // 1ms pulse width
+#define PULSE_13US  (13)
 
 #define MAX_INPUTS  8
 
